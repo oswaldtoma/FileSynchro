@@ -5,6 +5,8 @@ using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Data.Entity;
+using FileSynchro;
+using FileSync;
 
 namespace FileSynchro
 {
@@ -19,6 +21,7 @@ namespace FileSynchro
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());
+            //Application.Run(new TrayContext()); 2do
         }
     }
 }
