@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Data.Entity;
 
-namespace FileSync
+namespace FileSynchro
 {
     static class Program
     {

@@ -7,7 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FileSync
+namespace FileSynchro
 {
     static public class Synchronization
     {

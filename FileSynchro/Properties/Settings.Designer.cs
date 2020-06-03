@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace FileSync.Properties
+namespace FileSynchro.Properties
 {
 
 

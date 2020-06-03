@@ -1,4 +1,4 @@
-﻿namespace FileSync
+﻿namespace FileSynchro
 {
     partial class Form1
     {

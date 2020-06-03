@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FileSync
+namespace FileSynchro
 { 
     public class File
     {

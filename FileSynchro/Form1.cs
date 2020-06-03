@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace FileSync
+namespace FileSynchro
 {
     public partial class Form1 : Form
     {
@@ -20,7 +20,8 @@ namespace FileSync
 
         private void button1_Click(object sender, EventArgs e)
         {
-
+            FTPManager ftp = new FTPManager("ftp://127.0.0.1", "user", "password!");
+            ftp.downloadFile(".", "TheDotFactory.exe");
         }
     }
 }
