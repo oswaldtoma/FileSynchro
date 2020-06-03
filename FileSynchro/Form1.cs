@@ -24,5 +24,10 @@ namespace FileSynchro
             FTPManager ftp = new FTPManager("ftp://127.0.0.1", "user", "password!");
             ftp.downloadFile(".", "TheDotFactory.exe");
         }
+
+        private void localDirBrowseButton_Click(object sender, EventArgs e)
+        {
+            localFolderToSyncDialog.ShowDialog();
+        }
     }
 }

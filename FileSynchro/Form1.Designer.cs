@@ -120,6 +120,7 @@
             this.localDirBrowseButton.TabIndex = 0;
             this.localDirBrowseButton.Text = "Browse...";
             this.localDirBrowseButton.UseVisualStyleBackColor = true;
+            this.localDirBrowseButton.Click += new System.EventHandler(this.localDirBrowseButton_Click);
             // 
             // Form1
             // 
