@@ -16,13 +16,14 @@ namespace FileSynchro
         public Form1()
         {
             InitializeComponent();
-            Synchronization.init();
+            Synchronization.init("C:\\Users\\Oswald\\Desktop\\test");
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
             FTPManager ftp = new FTPManager("ftp://127.0.0.1", "user", "password!");
-            ftp.downloadFile(".", "TheDotFactory.exe");
+            //ftp.downloadFile(".", "TheDotFactory.exe");
+            ftp.getListOfAllRemoteFiles();
         }
 
         private void localDirBrowseButton_Click(object sender, EventArgs e)

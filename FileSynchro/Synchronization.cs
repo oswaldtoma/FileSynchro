@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,6 +13,8 @@ namespace FileSynchro
     static public class Synchronization
     {
         static public FileSynchroDbContext fileSynchroDb = new FileSynchroDbContext();
+        static List<File> localFiles = new List<File>();
+        static string localDirToSync = "";
 
         static public string getSHA1Checksum(FileInfo file)
         {
@@ -22,11 +25,16 @@ namespace FileSynchro
             }
         }
 
-        static public List<File> localFiles = new List<File>();
-        static public void init()
+
+        static public void init(string localDirPath)
         {
+            localDirToSync = localDirPath;
             fileSynchroDb.Database.CreateIfNotExists();
-            DirectoryInfo directory = new DirectoryInfo(".");
+        }
+
+        static void scanLocalFiles()
+        {
+            DirectoryInfo directory = new DirectoryInfo(localDirToSync);
             FileInfo[] files = directory.GetFiles();
 
             foreach (var file in files)
@@ -37,13 +45,23 @@ namespace FileSynchro
                     SHA1Checksum = getSHA1Checksum(file),
                     FileCreationDate = file.CreationTime,
                     FileLastModificationDate = file.LastWriteTime,
-                    FilePlacementDate = null,
-                    FileType = file.Extension,
+                    FileUploadDate = null,
+                    FileExtension = file.Extension,
                     FileSize = file.Length,
                     FileLocation = file.Name
                 };
                 localFiles.Add(tempFile);
             }
+        }
+
+        static void updateRemoteFilesTable()
+        {
+
+        }
+
+        static void compareFiles()
+        {
+            //fileSynchroDb.
         }
     }
 }

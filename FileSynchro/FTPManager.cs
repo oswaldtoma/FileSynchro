@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Primitives;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,6 +11,7 @@ namespace FileSynchro
 {
     public class FTPManager
     {
+
         private readonly string ftpServerAddress, ftpUsername, ftpPassword;
         public FTPManager(string ftpServerAddress, string ftpUsername, string ftpPassword)
         {
@@ -55,6 +57,55 @@ namespace FileSynchro
             {
                 responseStream.CopyTo(fileStream);
             }
+        }
+
+        public File fileListRecordConverter(string listRecord)
+        {
+            List<File> files = new List<File>();
+            File file = new File();
+            var splitRecord = String.Join(" ", listRecord.Split(new string[] { " " }, StringSplitOptions.RemoveEmptyEntries)).Split(' ').ToList();
+
+            StringBuilder filename = new StringBuilder();
+            for (int i = 8; i < splitRecord.Count; i++)
+            {
+                filename.Append($"{splitRecord[i]} ");
+            }
+            file.FileName = filename.ToString().TrimEnd();
+
+            DateTime lastModificationDate = new DateTime();
+            DateTime.TryParse($"{splitRecord[7]} {splitRecord[6]} {splitRecord[5]}", out lastModificationDate);
+            file.FileLastModificationDate = lastModificationDate;
+
+            file.FileExtension = file.FileName.Contains('.') ? file.FileName.Substring(file.FileName.LastIndexOf('.'), file.FileName.Length - file.FileName.LastIndexOf('.')) : null;
+
+            file.FileSize = Convert.ToInt64(splitRecord[4]);
+
+            //file.fileLocation 2do!!!
+
+            return file;
+        }
+
+        public void getListOfAllRemoteFiles()
+        {
+            FtpWebRequest request = (FtpWebRequest)WebRequest.Create(ftpServerAddress);
+            request.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
+
+            request.Credentials = new NetworkCredential(ftpUsername, ftpPassword);
+
+            FtpWebResponse response = (FtpWebResponse)request.GetResponse();
+
+            Stream responseStream = response.GetResponseStream();
+            StreamReader reader = new StreamReader(responseStream);
+
+            List<File> remoteFilesList = new List<File>();
+
+            while (!reader.EndOfStream)
+            {
+                remoteFilesList.Add(fileListRecordConverter(reader.ReadLine()));
+            }
+
+            reader.Close();
+            response.Close();
         }
     }
 }
