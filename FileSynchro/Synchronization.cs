@@ -15,6 +15,8 @@ namespace FileSynchro
         static public FileSynchroDbContext fileSynchroDb = new FileSynchroDbContext();
         static List<File> localFiles = new List<File>();
         static string localDirToSync = "";
+        static FTPManager ftpManager = new FTPManager("127.0.0.1", "user", "password!");
+
 
         static public string getSHA1Checksum(FileInfo file)
         {
@@ -29,13 +31,16 @@ namespace FileSynchro
         static public void init(string localDirPath)
         {
             localDirToSync = localDirPath;
-            fileSynchroDb.Database.CreateIfNotExists();
+            if (fileSynchroDb.Database.CreateIfNotExists())
+            {
+                updateRemoteFilesTable();
+            }
         }
 
         static void scanLocalFiles()
         {
             DirectoryInfo directory = new DirectoryInfo(localDirToSync);
-            FileInfo[] files = directory.GetFiles();
+            FileInfo[] files = directory.GetFiles("*", searchOption: SearchOption.AllDirectories);
 
             foreach (var file in files)
             {
@@ -48,7 +53,7 @@ namespace FileSynchro
                     FileUploadDate = null,
                     FileExtension = file.Extension,
                     FileSize = file.Length,
-                    FileLocation = file.Name
+                    FileLocationAbsPath = file.FullName
                 };
                 localFiles.Add(tempFile);
             }
@@ -56,12 +61,43 @@ namespace FileSynchro
 
         static void updateRemoteFilesTable()
         {
+            fileSynchroDb.RemoteFiles.RemoveRange(fileSynchroDb.RemoteFiles);
 
+            foreach (var item in ftpManager.getRemoteFilesList())
+            {
+                fileSynchroDb.RemoteFiles.Add(item);
+                fileSynchroDb.SaveChanges();
+            }
         }
 
-        static void compareFiles()
+        static public bool synchronize()
         {
-            //fileSynchroDb.
+            updateRemoteFilesTable(); //test
+            List<File> remoteFiles = fileSynchroDb.RemoteFiles.ToList();
+
+            scanLocalFiles();
+            if(Equals(localFiles, remoteFiles))
+            {
+                return true; 
+            }
+            else
+            {
+                List<File> filesToUpload = localFiles.Except(remoteFiles).ToList();
+                List<File> filesToDownload = remoteFiles.Except(localFiles).ToList();
+
+                foreach (var item in filesToUpload)
+                {
+                    string remotePath = item.FileLocationAbsPath.Replace(localDirToSync, "");
+                    ftpManager.uploadFile(item.FileLocationAbsPath, remotePath);
+                }
+
+                foreach (var remoteItem in filesToDownload)
+                {
+                    ftpManager.downloadFile($"{localDirToSync}", remoteItem.FileLocationAbsPath);
+                }
+                updateRemoteFilesTable();
+                return true;
+            }
         }
     }
 }

@@ -18,6 +18,6 @@ namespace FileSynchro
         public DateTime? FileUploadDate { get; set; }
         public string FileExtension { get; set; }
         public long FileSize { get; set; }
-        public string FileLocation { get; set; }
+        public string FileLocationAbsPath { get; set; }
     }
 }
