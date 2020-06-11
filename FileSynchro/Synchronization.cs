@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore.Internal;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -12,11 +13,12 @@ namespace FileSynchro
 {
     static public class Synchronization
     {
+        static bool isInitialized = false;
+        static string logVar = "";
+        static string localDirToSync, ftpAddress, ftpUsername, ftpPassword;
         static public FileSynchroDbContext fileSynchroDb = new FileSynchroDbContext();
         static List<File> localFiles = new List<File>();
-        static string localDirToSync = "";
-        static FTPManager ftpManager = new FTPManager("127.0.0.1", "user", "password!");
-
+        static FTPManager ftpManager = null;
 
         static public string getSHA1Checksum(FileInfo file)
         {
@@ -26,15 +28,26 @@ namespace FileSynchro
                 return BitConverter.ToString(sha.ComputeHash(fs));
             }
         }
+        static public void Log(string log)
+        {
+            logVar += DateTime.Now + log;
+        }
 
-
-        static public void init(string localDirPath)
+        static public bool init(string localDirPath, string ftpAddr, string ftpLogin, string ftpPass)
         {
             localDirToSync = localDirPath;
-            if (fileSynchroDb.Database.CreateIfNotExists())
-            {
-                updateRemoteFilesTable();
-            }
+            ftpAddress = ftpAddr;
+            ftpUsername = ftpLogin;
+            ftpPassword = ftpPass;
+
+            ftpManager = new FTPManager(ftpAddress, ftpUsername, ftpPassword);
+
+            fileSynchroDb.Database.CreateIfNotExists();
+            Log("Init finished");
+
+            isInitialized = true;
+
+            return isInitialized;
         }
 
         static void scanLocalFiles()
@@ -70,33 +83,33 @@ namespace FileSynchro
             }
         }
 
-        static public bool synchronize()
+        static public void synchronize()
         {
-            updateRemoteFilesTable(); //test
-            List<File> remoteFiles = fileSynchroDb.RemoteFiles.ToList();
-
-            scanLocalFiles();
-            if(Equals(localFiles, remoteFiles))
+            if (isInitialized)
             {
-                return true; 
-            }
-            else
-            {
-                List<File> filesToUpload = localFiles.Except(remoteFiles).ToList();
-                List<File> filesToDownload = remoteFiles.Except(localFiles).ToList();
-
-                foreach (var item in filesToUpload)
-                {
-                    string remotePath = item.FileLocationAbsPath.Replace(localDirToSync, "");
-                    ftpManager.uploadFile(item.FileLocationAbsPath, remotePath);
-                }
-
-                foreach (var remoteItem in filesToDownload)
-                {
-                    ftpManager.downloadFile($"{localDirToSync}", remoteItem.FileLocationAbsPath);
-                }
                 updateRemoteFilesTable();
-                return true;
+                List<File> remoteFiles = fileSynchroDb.RemoteFiles.ToList();
+
+                Task.Run(() =>
+                {
+                    scanLocalFiles();
+                    if (!Equals(localFiles, remoteFiles))
+                    {
+                        List<File> filesToUpload = localFiles.Except(remoteFiles).ToList();
+                        List<File> filesToDownload = remoteFiles.Except(localFiles).ToList();
+
+                        foreach (var item in filesToUpload)
+                        {
+                            string remotePath = item.FileLocationAbsPath.Replace(localDirToSync, "");
+                            ftpManager.uploadFile(item.FileLocationAbsPath, remotePath);
+                        }
+
+                        foreach (var remoteItem in filesToDownload)
+                        {
+                            ftpManager.downloadFile($"{localDirToSync}", remoteItem.FileLocationAbsPath);
+                        }
+                    }
+                });
             }
         }
     }
