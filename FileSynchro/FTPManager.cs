@@ -28,11 +28,16 @@ namespace FileSynchro
             ftpClient.UploadFile(localfileToUploadAbsPath, remotePath, createRemoteDir: true);
         }
 
+        public void setModifiedTime(string path, DateTime time)
+        {
+            ftpClient.SetModifiedTime(path, time, FtpDate.Local);
+        }
+
         public void downloadFile(string localDirectoryDestAbsPath, string remotePath)
         {
             ftpClient.DownloadFile(localDirectoryDestAbsPath + remotePath.Replace('/','\\'), remotePath);
         }
-        public List<File> getRemoteFilesList()
+        public List<File> getFtpRemoteFilesList()
         {
             FtpListItem[] remoteFilesList = ftpClient.GetListing(ftpClient.GetWorkingDirectory(), FtpListOption.Recursive);
 
@@ -44,9 +49,7 @@ namespace FileSynchro
                 if(item.Type == FtpFileSystemObjectType.File)
                 {
                     file.FileName = item.Name;
-                    file.SHA1Checksum = item.GetHashCode().ToString();
                     file.FileLastModificationDate = item.Modified;
-                    file.FileCreationDate = null;
                     file.FileExtension = item.Name.Substring(item.Name.LastIndexOf('.'), item.Name.Length - item.Name.LastIndexOf('.'));
                     file.FileSize = item.Size;
                     file.FileLocationAbsPath = item.FullName;

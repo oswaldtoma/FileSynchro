@@ -60,10 +60,7 @@ namespace FileSynchro
                 File tempFile = new File
                 {
                     FileName = file.Name,
-                    SHA1Checksum = getSHA1Checksum(file),
-                    FileCreationDate = file.CreationTime,
                     FileLastModificationDate = file.LastWriteTime,
-                    FileUploadDate = null,
                     FileExtension = file.Extension,
                     FileSize = file.Length,
                     FileLocationAbsPath = file.FullName
@@ -76,40 +73,70 @@ namespace FileSynchro
         {
             fileSynchroDb.RemoteFiles.RemoveRange(fileSynchroDb.RemoteFiles);
 
-            foreach (var item in ftpManager.getRemoteFilesList())
+            foreach (var item in ftpManager.getFtpRemoteFilesList())
             {
                 fileSynchroDb.RemoteFiles.Add(item);
-                fileSynchroDb.SaveChanges();
             }
+            fileSynchroDb.SaveChanges();
         }
-
         static public void synchronize()
         {
             if (isInitialized)
             {
-                updateRemoteFilesTable();
-                List<File> remoteFiles = fileSynchroDb.RemoteFiles.ToList();
+                List<File> remoteFilesTable = fileSynchroDb.RemoteFiles.ToList();
 
-                Task.Run(() =>
+                //Task.Run(() =>
                 {
                     scanLocalFiles();
-                    if (!Equals(localFiles, remoteFiles))
+
+                    List<File> filesToUpload = new List<File>();
+                    List<File> filesToDownload = new List<File>();
+
+                    List<File> ftpRemoteFilesList = ftpManager.getFtpRemoteFilesList();
+
+                    foreach (var remoteFile in remoteFilesTable)
                     {
-                        List<File> filesToUpload = localFiles.Except(remoteFiles).ToList();
-                        List<File> filesToDownload = remoteFiles.Except(localFiles).ToList();
-
-                        foreach (var item in filesToUpload)
+                        foreach (var localFile in localFiles)
                         {
-                            string remotePath = item.FileLocationAbsPath.Replace(localDirToSync, "");
-                            ftpManager.uploadFile(item.FileLocationAbsPath, remotePath);
-                        }
+                            bool isSameFile = remoteFile.FileName == localFile.FileName;
+                            bool hasRemoteFileSizeChanged = ftpRemoteFilesList.Find(x => x.FileName == remoteFile.FileName).FileSize != remoteFile.FileSize;
+                            bool hasLocalFileSizeChanged = remoteFile.FileSize != localFile.FileSize;
 
-                        foreach (var remoteItem in filesToDownload)
-                        {
-                            ftpManager.downloadFile($"{localDirToSync}", remoteItem.FileLocationAbsPath);
+                            if (isSameFile && hasRemoteFileSizeChanged)
+                            {
+                                filesToDownload.Add(remoteFile);
+                            }
+                            else if(isSameFile && hasLocalFileSizeChanged)
+                            {
+                                filesToUpload.Add(localFile);
+                            }
+
+                            if(localFiles.Find(x=>x.FileName == remoteFile.FileName) == null)
+                            {
+                                filesToDownload.Add(remoteFile);
+                            }
+
+                            if(remoteFilesTable.Find(x=>x.FileName == localFile.FileName) == null)
+                            {
+                                filesToUpload.Add(localFile);
+                            }
                         }
                     }
-                });
+
+                    foreach (var item in filesToUpload)
+                    {
+                        string remotePath = item.FileLocationAbsPath.Replace(localDirToSync, "");
+                        ftpManager.uploadFile(item.FileLocationAbsPath, remotePath);
+                    }
+
+                    foreach (var remoteItem in filesToDownload)
+                    {
+                        ftpManager.downloadFile($"{localDirToSync}", remoteItem.FileLocationAbsPath);
+                    }
+                }//);
+
+                updateRemoteFilesTable();
+
             }
         }
     }
