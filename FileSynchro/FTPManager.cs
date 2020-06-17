@@ -37,6 +37,11 @@ namespace FileSynchro
         {
             ftpClient.DownloadFile(localDirectoryDestAbsPath + remotePath.Replace('/','\\'), remotePath);
         }
+
+        public void deleteFile(string absPathToFile)
+        {
+            ftpClient.DeleteFile(absPathToFile);
+        }
         public List<File> getFtpRemoteFilesList()
         {
             FtpListItem[] remoteFilesList = ftpClient.GetListing(ftpClient.GetWorkingDirectory(), FtpListOption.Recursive);

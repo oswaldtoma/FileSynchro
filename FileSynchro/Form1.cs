@@ -17,6 +17,11 @@ namespace FileSynchro
         {
             Synchronization.fileSynchroDb.Database.Initialize(force: false);
             InitializeComponent();
+            //TODO config file
+            localDirTextbox.Text = "C:\\Users\\Oswald\\Desktop\\lokalnyfolder";
+            ftpServerAddrTextBox.Text = "127.0.0.1";
+            usernameTextBox.Text = "user";
+            passwordTextBox.Text = "password!";
         }
 
         private void button1_Click(object sender, EventArgs e)
