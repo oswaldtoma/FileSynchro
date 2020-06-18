@@ -14,7 +14,7 @@ namespace FileSynchro
     static public class Synchronization
     {
         static bool isInitialized = false;
-        static string logVar = "";
+        static public string logVar { get; set; }
         static string localDirToSync, ftpAddress, ftpUsername, ftpPassword;
         static public FileSynchroDbContext fileSynchroDb = new FileSynchroDbContext();
         static List<File> localFiles = new List<File>();
@@ -54,7 +54,7 @@ namespace FileSynchro
         {
             DirectoryInfo directory = new DirectoryInfo(localDirToSync);
             FileInfo[] files = directory.GetFiles("*", searchOption: SearchOption.AllDirectories);
-
+            Log("Started scanning local files...");
             foreach (var file in files)
             {
                 File tempFile = new File
@@ -74,6 +74,7 @@ namespace FileSynchro
 
         static void updateRemoteFilesTable()
         {
+            Log("Updating remote files table...");
             fileSynchroDb.RemoteFiles.RemoveRange(fileSynchroDb.RemoteFiles);
 
             foreach (var item in ftpManager.getFtpRemoteFilesList())
@@ -86,6 +87,7 @@ namespace FileSynchro
         {
             if (isInitialized)
             {
+                Log("Synchronizing...");
                 List<File> remoteFilesTable = fileSynchroDb.RemoteFiles.ToList();
 
                 //Task.Run(() =>
@@ -100,71 +102,61 @@ namespace FileSynchro
                     List<File> ftpRemoteFilesToDelete = new List<File>();
                     List<File> localFilesToDelete = new List<File>();
 
-                    foreach (var remoteFile in remoteFilesTable)
+                    #region update
+                    foreach (var remoteFile in ftpRemoteFilesList)
                     {
-                        foreach (var localFile in localFiles)
+                        File remoteFileTableRecord = remoteFilesTable.Find(x => x.FileLocationAbsPath == remoteFile.FileLocationAbsPath);
+                        if (remoteFileTableRecord != null)
                         {
-                            //bool isSameFile = remoteFile.FileName == localFile.FileName;
-                            //bool hasRemoteFileSizeChanged = ftpRemoteFilesList.Find(x => x.FileName == remoteFile.FileName).FileSize != remoteFile.FileSize;
-                            //bool hasLocalFileSizeChanged = remoteFile.FileSize != localFile.FileSize;
-
-                            ////update
-                            //if (isSameFile && hasRemoteFileSizeChanged)
-                            //{
-                            //    filesToDownload.Add(remoteFile);
-                            //}
-                            //else if(isSameFile && hasLocalFileSizeChanged)
-                            //{
-                            //    filesToUpload.Add(localFile);
-                            //}
-
-                            ////transfer new file to local
-                            //if(localFiles.Find(x=>x.FileName == remoteFile.FileName) == null)
-                            //{
-                            //    if (filesToDownload.Find(x=>x.FileName == remoteFile.FileName) == null)
-                            //    {
-                            //        filesToDownload.Add(remoteFile);
-                            //    }
-                            //}
-
-                            ////transfer new file to remote
-                            //if(remoteFilesTable.Find(x=>x.FileName == localFile.FileName) == null)
-                            //{
-                            //    if (filesToUpload.Find(x => x.FileName == localFile.FileName) == null)
-                            //    {
-                            //        filesToUpload.Add(localFile);
-                            //    }
-                            //}
-
-                            if(ftpRemoteFilesList.Count < remoteFilesTable.Count)
+                            if (remoteFileTableRecord.FileSize != remoteFile.FileSize)
                             {
-                                //looks like a remote file has been deleted
-                                if (ftpRemoteFilesList.Find(x => x.FileLocationAbsPath == remoteFile.FileLocationAbsPath) == null && localFilesToDelete.Find(x=>x.FileLocationAbsPath == remoteFile.FileLocationAbsPath) == null)
-                                {
-                                    localFilesToDelete.Add(remoteFile);
-                                }
+                                filesToDownload.Add(remoteFile);
+                                Log($"Added: {remoteFile.FileLocationAbsPath} to download queue! (update)");
                             }
-
-                            if(localFiles.Count < remoteFilesTable.Count)
+                        }
+                        else
+                        {
+                            if(localFiles.Find(x=>x.FileLocationAbsPath == remoteFile.FileLocationAbsPath) == null)
                             {
-                                //looks like a local file has been deleted
-                                if (localFiles.Find(x=>x.FileLocationAbsPath == remoteFile.FileLocationAbsPath) == null && ftpRemoteFilesToDelete.Find(x=>x.FileLocationAbsPath == remoteFile.FileLocationAbsPath) == null)
-                                {
-                                    ftpRemoteFilesToDelete.Add(remoteFile);
-                                }
+                                filesToDownload.Add(remoteFile);
+                                Log($"Added: {remoteFile.FileLocationAbsPath} to download queue!");
                             }
-
                         }
                     }
 
+                    foreach (var localFile in localFiles)
+                    {
+                        File remoteFileTableRecord = remoteFilesTable.Find(x => x.FileLocationAbsPath == localFile.FileLocationAbsPath.Replace(localDirToSync, "").Replace("\\", "/"));
+                        if (remoteFileTableRecord != null)
+                        {
+                            if (remoteFileTableRecord.FileSize != localFile.FileSize)
+                            { 
+                                filesToUpload.Add(localFile);
+                                Log($"Added: {localFile.FileLocationAbsPath} to upload queue! (update)");
+                            }
+                        }
+                        else
+                        {
+                            if (ftpRemoteFilesList.Find(x => x.FileLocationAbsPath == localFile.FileLocationAbsPath.Replace(localDirToSync, "").Replace("\\", "/")) == null)
+                            {
+                                filesToUpload.Add(localFile);
+                                Log($"Added: {localFile.FileLocationAbsPath} to upload queue!");
+                            }
+                        }
+                    }
+                    #endregion
+
+                    #region ftpPart
                     foreach (var file in filesToUpload)
                     {
-                        string remotePath = file.FileLocationAbsPath.Replace(localDirToSync, "");
+                        string remotePath = file.FileLocationAbsPath.Replace(localDirToSync, "").Replace("\\", "/");
+                        Log($"Uploading: {file.FileLocationAbsPath}");
                         ftpManager.uploadFile(file.FileLocationAbsPath, remotePath);
                     }
 
                     foreach (var remoteFile in filesToDownload)
                     {
+                        Log($"Downloading: {remoteFile.FileLocationAbsPath}");
                         ftpManager.downloadFile($"{localDirToSync}", remoteFile.FileLocationAbsPath);
                     }
 
@@ -177,6 +169,7 @@ namespace FileSynchro
                     {
                         System.IO.File.Delete($"{localDirToSync.Replace("\\", "/")}{localFile.FileLocationAbsPath}");
                     }
+                    #endregion
                 }//);
 
                 updateRemoteFilesTable();

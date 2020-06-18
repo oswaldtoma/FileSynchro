@@ -51,6 +51,7 @@
             this.localDirToSyncDialog = new System.Windows.Forms.FolderBrowserDialog();
             this.syncTimer = new System.Windows.Forms.Timer(this.components);
             this.fileSystemWatcher1 = new System.IO.FileSystemWatcher();
+            this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.tabControl1.SuspendLayout();
             this.LogsPage.SuspendLayout();
             this.SettingsPage.SuspendLayout();
@@ -265,6 +266,10 @@
             this.fileSystemWatcher1.SynchronizingObject = this;
             this.fileSystemWatcher1.Changed += new System.IO.FileSystemEventHandler(this.fileSystemWatcher1_Changed);
             // 
+            // backgroundWorker1
+            // 
+            this.backgroundWorker1.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -308,6 +313,7 @@
         private System.Windows.Forms.Button ftpSettingsApplyButton;
         private System.Windows.Forms.Timer syncTimer;
         private System.IO.FileSystemWatcher fileSystemWatcher1;
+        private System.ComponentModel.BackgroundWorker backgroundWorker1;
     }
 }
 
