@@ -13,7 +13,7 @@ namespace FileSynchro
 {
     static public class Synchronization
     {
-        static bool isInitialized = false;
+        static public bool isInitialized { get; set; }
         static public string logVar { get; set; }
         static string localDirToSync, ftpAddress, ftpUsername, ftpPassword;
         static public FileSynchroDbContext fileSynchroDb = new FileSynchroDbContext();
@@ -30,24 +30,27 @@ namespace FileSynchro
         }
         static public void Log(string log)
         {
-            logVar += DateTime.Now + log;
+            logVar += "[" + DateTime.Now + "]" + " " + log + Environment.NewLine;
         }
 
-        static public bool init(string localDirPath, string ftpAddr, string ftpLogin, string ftpPass)
+        static public async Task init(string localDirPath, string ftpAddr, string ftpLogin, string ftpPass, bool secureMode = false)
         {
             localDirToSync = localDirPath;
             ftpAddress = ftpAddr;
             ftpUsername = ftpLogin;
             ftpPassword = ftpPass;
 
-            ftpManager = new FTPManager(ftpAddress, ftpUsername, ftpPassword);
+            ftpManager = new FTPManager(ftpAddress, ftpUsername, ftpPassword, secureMode);
+            await ftpManager.connect();
 
             fileSynchroDb.Database.CreateIfNotExists();
             Log("Init finished");
 
-            isInitialized = true;
-
-            return isInitialized;
+            isInitialized = await ftpManager.connect();
+            if(!isInitialized)
+            {
+                Log("Failed to connect with FTP server!");
+            }
         }
 
         static void scanLocalFiles()
@@ -55,6 +58,7 @@ namespace FileSynchro
             DirectoryInfo directory = new DirectoryInfo(localDirToSync);
             FileInfo[] files = directory.GetFiles("*", searchOption: SearchOption.AllDirectories);
             Log("Started scanning local files...");
+            localFiles.Clear();
             foreach (var file in files)
             {
                 File tempFile = new File
@@ -65,10 +69,8 @@ namespace FileSynchro
                     FileSize = file.Length,
                     FileLocationAbsPath = file.FullName
                 };
-                if (localFiles.Find(x => x.FileLocationAbsPath == tempFile.FileLocationAbsPath) == null)
-                {
-                    localFiles.Add(tempFile);
-                }
+                localFiles.Add(tempFile);
+                Log(tempFile.FileLocationAbsPath);
             }
         }
 
@@ -83,14 +85,14 @@ namespace FileSynchro
             }
             fileSynchroDb.SaveChanges();
         }
-        static public void synchronize()
+        static public async Task synchronize()
         {
             if (isInitialized)
             {
                 Log("Synchronizing...");
                 List<File> remoteFilesTable = fileSynchroDb.RemoteFiles.ToList();
 
-                //Task.Run(() =>
+                await Task.Run(() =>
                 {
                     scanLocalFiles();
 
@@ -170,7 +172,7 @@ namespace FileSynchro
                         System.IO.File.Delete($"{localDirToSync.Replace("\\", "/")}{localFile.FileLocationAbsPath}");
                     }
                     #endregion
-                }//);
+                });
 
                 updateRemoteFilesTable();
 

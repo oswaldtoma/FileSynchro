@@ -7,24 +7,42 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using FluentFTP;
+using Microsoft.Identity.Client;
 
 namespace FileSynchro
 {
     public class FTPManager
-    { 
+    {
+        readonly bool secureMode;
         readonly string ftpServerAddress, ftpUsername, ftpPassword;
         FtpClient ftpClient = new FtpClient();
-        public FTPManager(string ftpServerAddress, string ftpUsername, string ftpPassword)
+        public FTPManager(string ftpServerAddress, string ftpUsername, string ftpPassword, bool secureMode = false)
         {
             this.ftpServerAddress = ftpServerAddress;
             this.ftpUsername = ftpUsername;
             this.ftpPassword = ftpPassword;
+            this.secureMode = secureMode;
 
             ftpClient = new FtpClient(ftpServerAddress, ftpUsername, ftpPassword);
         }
 
-        public void uploadFile(string localfileToUploadAbsPath, string remotePath)
+        public async Task<bool> connect()
         {
+            if (secureMode)
+            {
+                await ftpClient.AutoConnectAsync();
+            }
+            else
+            {
+                await ftpClient.ConnectAsync();
+            }
+
+            return ftpClient.IsConnected;
+            
+        }
+
+        public void uploadFile(string localfileToUploadAbsPath, string remotePath)
+        { 
             ftpClient.UploadFile(localfileToUploadAbsPath, remotePath, createRemoteDir: true);
         }
 

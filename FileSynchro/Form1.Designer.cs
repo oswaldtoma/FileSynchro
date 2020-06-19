@@ -1,6 +1,6 @@
 ﻿namespace FileSynchro
 {
-    partial class Form1
+    partial class FileSynchro
     {
         /// <summary>
         /// Wymagana zmienna projektanta.
@@ -29,16 +29,17 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FileSynchro));
             this.TEST = new System.Windows.Forms.Button();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.LogsPage = new System.Windows.Forms.TabPage();
             this.logsTextBox = new System.Windows.Forms.TextBox();
             this.SettingsPage = new System.Windows.Forms.TabPage();
+            this.connectButton = new System.Windows.Forms.Button();
             this.ftpSettingsApplyButton = new System.Windows.Forms.Button();
             this.ftpsCheckbox = new System.Windows.Forms.CheckBox();
             this.ftpServerAddrTextBox = new System.Windows.Forms.TextBox();
             this.ftpServerAddrLabel = new System.Windows.Forms.Label();
-            this.ftpSyncCheckBox = new System.Windows.Forms.CheckBox();
             this.passwordTextBox = new System.Windows.Forms.TextBox();
             this.passwordLabel = new System.Windows.Forms.Label();
             this.usernameTextBox = new System.Windows.Forms.TextBox();
@@ -49,8 +50,8 @@
             this.localDirToSyncDialog = new System.Windows.Forms.FolderBrowserDialog();
             this.syncTimer = new System.Windows.Forms.Timer(this.components);
             this.fileSystemWatcher1 = new System.IO.FileSystemWatcher();
-            this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
-            this.connectButton = new System.Windows.Forms.Button();
+            this.logTimer = new System.Windows.Forms.Timer(this.components);
+            this.trayIcon = new System.Windows.Forms.NotifyIcon(this.components);
             this.tabControl1.SuspendLayout();
             this.LogsPage.SuspendLayout();
             this.SettingsPage.SuspendLayout();
@@ -71,10 +72,11 @@
             // 
             this.tabControl1.Controls.Add(this.LogsPage);
             this.tabControl1.Controls.Add(this.SettingsPage);
-            this.tabControl1.Location = new System.Drawing.Point(12, 12);
+            this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(611, 354);
+            this.tabControl1.Size = new System.Drawing.Size(647, 405);
             this.tabControl1.TabIndex = 1;
             // 
             // LogsPage
@@ -83,20 +85,24 @@
             this.LogsPage.Location = new System.Drawing.Point(4, 22);
             this.LogsPage.Name = "LogsPage";
             this.LogsPage.Padding = new System.Windows.Forms.Padding(3);
-            this.LogsPage.Size = new System.Drawing.Size(603, 328);
+            this.LogsPage.Size = new System.Drawing.Size(639, 379);
             this.LogsPage.TabIndex = 0;
             this.LogsPage.Text = "Logs";
             this.LogsPage.UseVisualStyleBackColor = true;
             // 
             // logsTextBox
             // 
+            this.logsTextBox.AcceptsReturn = true;
             this.logsTextBox.BackColor = System.Drawing.SystemColors.ControlLightLight;
+            this.logsTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
             this.logsTextBox.Location = new System.Drawing.Point(3, 3);
             this.logsTextBox.Multiline = true;
             this.logsTextBox.Name = "logsTextBox";
             this.logsTextBox.ReadOnly = true;
-            this.logsTextBox.Size = new System.Drawing.Size(597, 322);
+            this.logsTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.logsTextBox.Size = new System.Drawing.Size(633, 373);
             this.logsTextBox.TabIndex = 0;
+            this.logsTextBox.TextChanged += new System.EventHandler(this.logsTextBox_TextChanged);
             // 
             // SettingsPage
             // 
@@ -106,7 +112,6 @@
             this.SettingsPage.Controls.Add(this.ftpsCheckbox);
             this.SettingsPage.Controls.Add(this.ftpServerAddrTextBox);
             this.SettingsPage.Controls.Add(this.ftpServerAddrLabel);
-            this.SettingsPage.Controls.Add(this.ftpSyncCheckBox);
             this.SettingsPage.Controls.Add(this.passwordTextBox);
             this.SettingsPage.Controls.Add(this.passwordLabel);
             this.SettingsPage.Controls.Add(this.usernameTextBox);
@@ -117,9 +122,19 @@
             this.SettingsPage.Location = new System.Drawing.Point(4, 22);
             this.SettingsPage.Name = "SettingsPage";
             this.SettingsPage.Padding = new System.Windows.Forms.Padding(3);
-            this.SettingsPage.Size = new System.Drawing.Size(603, 328);
+            this.SettingsPage.Size = new System.Drawing.Size(639, 379);
             this.SettingsPage.TabIndex = 1;
             this.SettingsPage.Text = "Settings";
+            // 
+            // connectButton
+            // 
+            this.connectButton.Location = new System.Drawing.Point(183, 258);
+            this.connectButton.Name = "connectButton";
+            this.connectButton.Size = new System.Drawing.Size(135, 23);
+            this.connectButton.TabIndex = 13;
+            this.connectButton.Text = "Connect";
+            this.connectButton.UseVisualStyleBackColor = true;
+            this.connectButton.Click += new System.EventHandler(this.connectButton_Click);
             // 
             // ftpSettingsApplyButton
             // 
@@ -159,16 +174,6 @@
             this.ftpServerAddrLabel.TabIndex = 9;
             this.ftpServerAddrLabel.Text = "FTP Address:";
             this.ftpServerAddrLabel.Click += new System.EventHandler(this.label1_Click);
-            // 
-            // ftpSyncCheckBox
-            // 
-            this.ftpSyncCheckBox.AutoSize = true;
-            this.ftpSyncCheckBox.Location = new System.Drawing.Point(183, 66);
-            this.ftpSyncCheckBox.Name = "ftpSyncCheckBox";
-            this.ftpSyncCheckBox.Size = new System.Drawing.Size(107, 17);
-            this.ftpSyncCheckBox.TabIndex = 7;
-            this.ftpSyncCheckBox.Text = "FTP Server Sync";
-            this.ftpSyncCheckBox.UseVisualStyleBackColor = true;
             // 
             // passwordTextBox
             // 
@@ -245,29 +250,31 @@
             this.fileSystemWatcher1.SynchronizingObject = this;
             this.fileSystemWatcher1.Changed += new System.IO.FileSystemEventHandler(this.fileSystemWatcher1_Changed);
             // 
-            // backgroundWorker1
+            // logTimer
             // 
-            this.backgroundWorker1.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
+            this.logTimer.Enabled = true;
+            this.logTimer.Tick += new System.EventHandler(this.logTimer_Tick);
             // 
-            // connectButton
+            // trayIcon
             // 
-            this.connectButton.Location = new System.Drawing.Point(183, 258);
-            this.connectButton.Name = "connectButton";
-            this.connectButton.Size = new System.Drawing.Size(135, 23);
-            this.connectButton.TabIndex = 13;
-            this.connectButton.Text = "Connect";
-            this.connectButton.UseVisualStyleBackColor = true;
-            this.connectButton.Click += new System.EventHandler(this.connectButton_Click);
+            this.trayIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("trayIcon.Icon")));
+            this.trayIcon.Text = "FileSynchro";
+            this.trayIcon.Visible = true;
+            this.trayIcon.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.trayIcon_onMouseDoubleClick);
             // 
-            // Form1
+            // FileSynchro
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(635, 407);
+            this.ClientSize = new System.Drawing.Size(647, 405);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.TEST);
-            this.Name = "Form1";
-            this.Text = "Form1";
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.Name = "FileSynchro";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.Text = "FileSynchro";
+            this.Load += new System.EventHandler(this.Form1_Load);
+            this.Resize += new System.EventHandler(this.Form1_resizeChanged);
             this.tabControl1.ResumeLayout(false);
             this.LogsPage.ResumeLayout(false);
             this.LogsPage.PerformLayout();
@@ -294,14 +301,14 @@
         private System.Windows.Forms.Label passwordLabel;
         private System.Windows.Forms.TextBox usernameTextBox;
         private System.Windows.Forms.Label ftpServerAddrLabel;
-        private System.Windows.Forms.CheckBox ftpSyncCheckBox;
         private System.Windows.Forms.CheckBox ftpsCheckbox;
         private System.Windows.Forms.TextBox ftpServerAddrTextBox;
         private System.Windows.Forms.Button ftpSettingsApplyButton;
         private System.Windows.Forms.Timer syncTimer;
         private System.IO.FileSystemWatcher fileSystemWatcher1;
-        private System.ComponentModel.BackgroundWorker backgroundWorker1;
         private System.Windows.Forms.Button connectButton;
+        private System.Windows.Forms.Timer logTimer;
+        private System.Windows.Forms.NotifyIcon trayIcon;
     }
 }
 

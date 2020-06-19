@@ -11,11 +11,10 @@ using System.Windows.Forms;
 
 namespace FileSynchro
 {
-    public partial class Form1 : Form
+    public partial class FileSynchro : Form
     {
-        public Form1()
+        public FileSynchro()
         {
-            Synchronization.fileSynchroDb.Database.Initialize(force: false);
             InitializeComponent();
             connectButton.Enabled = false;
             //TODO config file
@@ -24,10 +23,9 @@ namespace FileSynchro
             usernameTextBox.Text = "user";
             passwordTextBox.Text = "password!";
         }
-
         private void button1_Click(object sender, EventArgs e)
         {
-            Synchronization.synchronize();
+            
         }
 
         private void localDirBrowseButton_Click(object sender, EventArgs e)
@@ -51,9 +49,9 @@ namespace FileSynchro
             }
         }
 
-        private void timer1_Tick(object sender, EventArgs e)
+        private async void timer1_Tick(object sender, EventArgs e)
         {
-
+            await Synchronization.synchronize();
         }
 
         private void localDirTextbox_TextChanged(object sender, EventArgs e)
@@ -81,9 +79,9 @@ namespace FileSynchro
             ftpSettingsApplyButton.Enabled = true;
         }
 
-        private void fileSystemWatcher1_Changed(object sender, System.IO.FileSystemEventArgs e)
+        private async void fileSystemWatcher1_Changed(object sender, System.IO.FileSystemEventArgs e)
         {
-            Synchronization.synchronize();
+            await Synchronization.synchronize();
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
@@ -91,9 +89,48 @@ namespace FileSynchro
             
         }
 
-        private void connectButton_Click(object sender, EventArgs e)
+        private async void connectButton_Click(object sender, EventArgs e)
         {
-            Synchronization.init(localDirTextbox.Text, ftpServerAddrTextBox.Text, usernameTextBox.Text, passwordTextBox.Text);
+            if (!Synchronization.isInitialized)
+            {
+                await Synchronization.init(localDirTextbox.Text, ftpServerAddrTextBox.Text, usernameTextBox.Text, passwordTextBox.Text, ftpsCheckbox.Checked);
+            }
+        }
+
+        private void logTimer_Tick(object sender, EventArgs e)
+        {
+            logsTextBox.Text = Synchronization.logVar;
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void logsTextBox_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void Form1_resizeChanged(object sender, EventArgs e)
+        {
+            if (FormWindowState.Minimized == this.WindowState)
+            {
+                trayIcon.Visible = true;
+                this.ShowInTaskbar = false;
+            }
+
+            else if (FormWindowState.Normal == this.WindowState)
+            {
+                trayIcon.Visible = false;
+                this.ShowInTaskbar = true;
+            }
+        }
+
+        private void trayIcon_onMouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            this.Show();
+            this.WindowState = FormWindowState.Normal;
         }
     }
 }
