@@ -17,6 +17,7 @@ namespace FileSynchro
         {
             Synchronization.fileSynchroDb.Database.Initialize(force: false);
             InitializeComponent();
+            connectButton.Enabled = false;
             //TODO config file
             localDirTextbox.Text = "C:\\Users\\Oswald\\Desktop\\lokalnyfolder";
             ftpServerAddrTextBox.Text = "127.0.0.1";
@@ -46,7 +47,7 @@ namespace FileSynchro
             {
                 ftpSettingsApplyButton.Enabled = false;
                 fileSystemWatcher1.Path = localDirTextbox.Text;
-                Synchronization.init(localDirTextbox.Text, ftpServerAddrTextBox.Text, usernameTextBox.Text, passwordTextBox.Text); 
+                connectButton.Enabled = true;
             }
         }
 
@@ -58,7 +59,6 @@ namespace FileSynchro
         private void localDirTextbox_TextChanged(object sender, EventArgs e)
         {
             ftpSettingsApplyButton.Enabled = true;
-            googleDriveSettingsApplyButton.Enabled = true;
         }
 
         private void ftpServerAddrTextBox_TextChanged(object sender, EventArgs e)
@@ -89,6 +89,11 @@ namespace FileSynchro
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
             
+        }
+
+        private void connectButton_Click(object sender, EventArgs e)
+        {
+            Synchronization.init(localDirTextbox.Text, ftpServerAddrTextBox.Text, usernameTextBox.Text, passwordTextBox.Text);
         }
     }
 }

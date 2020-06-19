@@ -34,12 +34,10 @@
             this.LogsPage = new System.Windows.Forms.TabPage();
             this.logsTextBox = new System.Windows.Forms.TextBox();
             this.SettingsPage = new System.Windows.Forms.TabPage();
-            this.googleDriveSettingsApplyButton = new System.Windows.Forms.Button();
             this.ftpSettingsApplyButton = new System.Windows.Forms.Button();
             this.ftpsCheckbox = new System.Windows.Forms.CheckBox();
             this.ftpServerAddrTextBox = new System.Windows.Forms.TextBox();
             this.ftpServerAddrLabel = new System.Windows.Forms.Label();
-            this.GoogleDriveSyncCheckBox = new System.Windows.Forms.CheckBox();
             this.ftpSyncCheckBox = new System.Windows.Forms.CheckBox();
             this.passwordTextBox = new System.Windows.Forms.TextBox();
             this.passwordLabel = new System.Windows.Forms.Label();
@@ -52,6 +50,7 @@
             this.syncTimer = new System.Windows.Forms.Timer(this.components);
             this.fileSystemWatcher1 = new System.IO.FileSystemWatcher();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
+            this.connectButton = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.LogsPage.SuspendLayout();
             this.SettingsPage.SuspendLayout();
@@ -102,12 +101,11 @@
             // SettingsPage
             // 
             this.SettingsPage.BackColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.SettingsPage.Controls.Add(this.googleDriveSettingsApplyButton);
+            this.SettingsPage.Controls.Add(this.connectButton);
             this.SettingsPage.Controls.Add(this.ftpSettingsApplyButton);
             this.SettingsPage.Controls.Add(this.ftpsCheckbox);
             this.SettingsPage.Controls.Add(this.ftpServerAddrTextBox);
             this.SettingsPage.Controls.Add(this.ftpServerAddrLabel);
-            this.SettingsPage.Controls.Add(this.GoogleDriveSyncCheckBox);
             this.SettingsPage.Controls.Add(this.ftpSyncCheckBox);
             this.SettingsPage.Controls.Add(this.passwordTextBox);
             this.SettingsPage.Controls.Add(this.passwordLabel);
@@ -123,18 +121,9 @@
             this.SettingsPage.TabIndex = 1;
             this.SettingsPage.Text = "Settings";
             // 
-            // googleDriveSettingsApplyButton
-            // 
-            this.googleDriveSettingsApplyButton.Location = new System.Drawing.Point(415, 250);
-            this.googleDriveSettingsApplyButton.Name = "googleDriveSettingsApplyButton";
-            this.googleDriveSettingsApplyButton.Size = new System.Drawing.Size(75, 23);
-            this.googleDriveSettingsApplyButton.TabIndex = 13;
-            this.googleDriveSettingsApplyButton.Text = "Apply";
-            this.googleDriveSettingsApplyButton.UseVisualStyleBackColor = true;
-            // 
             // ftpSettingsApplyButton
             // 
-            this.ftpSettingsApplyButton.Location = new System.Drawing.Point(69, 251);
+            this.ftpSettingsApplyButton.Location = new System.Drawing.Point(243, 229);
             this.ftpSettingsApplyButton.Name = "ftpSettingsApplyButton";
             this.ftpSettingsApplyButton.Size = new System.Drawing.Size(75, 23);
             this.ftpSettingsApplyButton.TabIndex = 12;
@@ -145,7 +134,7 @@
             // ftpsCheckbox
             // 
             this.ftpsCheckbox.AutoSize = true;
-            this.ftpsCheckbox.Location = new System.Drawing.Point(151, 142);
+            this.ftpsCheckbox.Location = new System.Drawing.Point(325, 120);
             this.ftpsCheckbox.Name = "ftpsCheckbox";
             this.ftpsCheckbox.Size = new System.Drawing.Size(107, 17);
             this.ftpsCheckbox.TabIndex = 11;
@@ -155,7 +144,7 @@
             // 
             // ftpServerAddrTextBox
             // 
-            this.ftpServerAddrTextBox.Location = new System.Drawing.Point(9, 140);
+            this.ftpServerAddrTextBox.Location = new System.Drawing.Point(183, 118);
             this.ftpServerAddrTextBox.Name = "ftpServerAddrTextBox";
             this.ftpServerAddrTextBox.Size = new System.Drawing.Size(135, 20);
             this.ftpServerAddrTextBox.TabIndex = 10;
@@ -164,27 +153,17 @@
             // ftpServerAddrLabel
             // 
             this.ftpServerAddrLabel.AutoSize = true;
-            this.ftpServerAddrLabel.Location = new System.Drawing.Point(9, 124);
+            this.ftpServerAddrLabel.Location = new System.Drawing.Point(183, 102);
             this.ftpServerAddrLabel.Name = "ftpServerAddrLabel";
             this.ftpServerAddrLabel.Size = new System.Drawing.Size(71, 13);
             this.ftpServerAddrLabel.TabIndex = 9;
             this.ftpServerAddrLabel.Text = "FTP Address:";
             this.ftpServerAddrLabel.Click += new System.EventHandler(this.label1_Click);
             // 
-            // GoogleDriveSyncCheckBox
-            // 
-            this.GoogleDriveSyncCheckBox.AutoSize = true;
-            this.GoogleDriveSyncCheckBox.Location = new System.Drawing.Point(376, 88);
-            this.GoogleDriveSyncCheckBox.Name = "GoogleDriveSyncCheckBox";
-            this.GoogleDriveSyncCheckBox.Size = new System.Drawing.Size(115, 17);
-            this.GoogleDriveSyncCheckBox.TabIndex = 8;
-            this.GoogleDriveSyncCheckBox.Text = "Google Drive Sync";
-            this.GoogleDriveSyncCheckBox.UseVisualStyleBackColor = true;
-            // 
             // ftpSyncCheckBox
             // 
             this.ftpSyncCheckBox.AutoSize = true;
-            this.ftpSyncCheckBox.Location = new System.Drawing.Point(9, 88);
+            this.ftpSyncCheckBox.Location = new System.Drawing.Point(183, 66);
             this.ftpSyncCheckBox.Name = "ftpSyncCheckBox";
             this.ftpSyncCheckBox.Size = new System.Drawing.Size(107, 17);
             this.ftpSyncCheckBox.TabIndex = 7;
@@ -193,7 +172,7 @@
             // 
             // passwordTextBox
             // 
-            this.passwordTextBox.Location = new System.Drawing.Point(9, 225);
+            this.passwordTextBox.Location = new System.Drawing.Point(183, 203);
             this.passwordTextBox.Name = "passwordTextBox";
             this.passwordTextBox.PasswordChar = '*';
             this.passwordTextBox.Size = new System.Drawing.Size(135, 20);
@@ -203,7 +182,7 @@
             // passwordLabel
             // 
             this.passwordLabel.AutoSize = true;
-            this.passwordLabel.Location = new System.Drawing.Point(9, 209);
+            this.passwordLabel.Location = new System.Drawing.Point(183, 187);
             this.passwordLabel.Name = "passwordLabel";
             this.passwordLabel.Size = new System.Drawing.Size(56, 13);
             this.passwordLabel.TabIndex = 5;
@@ -211,7 +190,7 @@
             // 
             // usernameTextBox
             // 
-            this.usernameTextBox.Location = new System.Drawing.Point(9, 186);
+            this.usernameTextBox.Location = new System.Drawing.Point(183, 164);
             this.usernameTextBox.Name = "usernameTextBox";
             this.usernameTextBox.Size = new System.Drawing.Size(135, 20);
             this.usernameTextBox.TabIndex = 4;
@@ -220,7 +199,7 @@
             // usernameLabel
             // 
             this.usernameLabel.AutoSize = true;
-            this.usernameLabel.Location = new System.Drawing.Point(9, 170);
+            this.usernameLabel.Location = new System.Drawing.Point(183, 148);
             this.usernameLabel.Name = "usernameLabel";
             this.usernameLabel.Size = new System.Drawing.Size(58, 13);
             this.usernameLabel.TabIndex = 3;
@@ -270,6 +249,16 @@
             // 
             this.backgroundWorker1.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
             // 
+            // connectButton
+            // 
+            this.connectButton.Location = new System.Drawing.Point(183, 258);
+            this.connectButton.Name = "connectButton";
+            this.connectButton.Size = new System.Drawing.Size(135, 23);
+            this.connectButton.TabIndex = 13;
+            this.connectButton.Text = "Connect";
+            this.connectButton.UseVisualStyleBackColor = true;
+            this.connectButton.Click += new System.EventHandler(this.connectButton_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -305,15 +294,14 @@
         private System.Windows.Forms.Label passwordLabel;
         private System.Windows.Forms.TextBox usernameTextBox;
         private System.Windows.Forms.Label ftpServerAddrLabel;
-        private System.Windows.Forms.CheckBox GoogleDriveSyncCheckBox;
         private System.Windows.Forms.CheckBox ftpSyncCheckBox;
         private System.Windows.Forms.CheckBox ftpsCheckbox;
         private System.Windows.Forms.TextBox ftpServerAddrTextBox;
-        private System.Windows.Forms.Button googleDriveSettingsApplyButton;
         private System.Windows.Forms.Button ftpSettingsApplyButton;
         private System.Windows.Forms.Timer syncTimer;
         private System.IO.FileSystemWatcher fileSystemWatcher1;
         private System.ComponentModel.BackgroundWorker backgroundWorker1;
+        private System.Windows.Forms.Button connectButton;
     }
 }
 
