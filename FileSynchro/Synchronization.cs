@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using System.Configuration;
 
 namespace FileSynchro
 {
@@ -44,7 +45,7 @@ namespace FileSynchro
             await ftpManager.connect();
 
             fileSynchroDb.Database.CreateIfNotExists();
-            Log("Init finished");
+            Log("Init finished.");
 
             isInitialized = await ftpManager.connect();
             if(!isInitialized)
@@ -72,18 +73,22 @@ namespace FileSynchro
                 localFiles.Add(tempFile);
                 Log(tempFile.FileLocationAbsPath);
             }
+            Log("Scanning finished.");
         }
 
-        static void updateRemoteFilesTable()
+        static async Task updateRemoteFilesTable()
         {
             Log("Updating remote files table...");
             fileSynchroDb.RemoteFiles.RemoveRange(fileSynchroDb.RemoteFiles);
 
-            foreach (var item in ftpManager.getFtpRemoteFilesList())
+            var ftpRemoteFilesList = await ftpManager.getFtpRemoteFilesList();
+
+            foreach (var item in ftpRemoteFilesList)
             {
                 fileSynchroDb.RemoteFiles.Add(item);
             }
             fileSynchroDb.SaveChanges();
+            Log("Updated.");
         }
         static public async Task synchronize()
         {
@@ -92,89 +97,72 @@ namespace FileSynchro
                 Log("Synchronizing...");
                 List<File> remoteFilesTable = fileSynchroDb.RemoteFiles.ToList();
 
-                await Task.Run(() =>
+                scanLocalFiles();
+
+                List<File> filesToUpload = new List<File>();
+                List<File> filesToDownload = new List<File>();
+
+                List<File> ftpRemoteFilesList = await ftpManager.getFtpRemoteFilesList();
+
+                List<File> ftpRemoteFilesToDelete = new List<File>();
+                List<File> localFilesToDelete = new List<File>();
+
+                #region update
+                foreach (var remoteFile in ftpRemoteFilesList)
                 {
-                    scanLocalFiles();
-
-                    List<File> filesToUpload = new List<File>();
-                    List<File> filesToDownload = new List<File>();
-
-                    List<File> ftpRemoteFilesList = ftpManager.getFtpRemoteFilesList();
-
-                    List<File> ftpRemoteFilesToDelete = new List<File>();
-                    List<File> localFilesToDelete = new List<File>();
-
-                    #region update
-                    foreach (var remoteFile in ftpRemoteFilesList)
+                    File remoteFileTableRecord = remoteFilesTable.Find(x => x.FileLocationAbsPath == remoteFile.FileLocationAbsPath);
+                    if (remoteFileTableRecord != null)
                     {
-                        File remoteFileTableRecord = remoteFilesTable.Find(x => x.FileLocationAbsPath == remoteFile.FileLocationAbsPath);
-                        if (remoteFileTableRecord != null)
+                        if (remoteFileTableRecord.FileSize != remoteFile.FileSize)
                         {
-                            if (remoteFileTableRecord.FileSize != remoteFile.FileSize)
-                            {
-                                filesToDownload.Add(remoteFile);
-                                Log($"Added: {remoteFile.FileLocationAbsPath} to download queue! (update)");
-                            }
-                        }
-                        else
-                        {
-                            if(localFiles.Find(x=>x.FileLocationAbsPath == remoteFile.FileLocationAbsPath) == null)
-                            {
-                                filesToDownload.Add(remoteFile);
-                                Log($"Added: {remoteFile.FileLocationAbsPath} to download queue!");
-                            }
+                            filesToDownload.Add(remoteFile);
+                            Log($"Added: {remoteFile.FileLocationAbsPath} to download queue! (update)");
                         }
                     }
 
-                    foreach (var localFile in localFiles)
+                    if(localFiles.Find(x=>x.FileLocationAbsPath.Replace(localDirToSync, "").Replace("\\", "/") == remoteFile.FileLocationAbsPath) == null)
                     {
-                        File remoteFileTableRecord = remoteFilesTable.Find(x => x.FileLocationAbsPath == localFile.FileLocationAbsPath.Replace(localDirToSync, "").Replace("\\", "/"));
-                        if (remoteFileTableRecord != null)
-                        {
-                            if (remoteFileTableRecord.FileSize != localFile.FileSize)
-                            { 
-                                filesToUpload.Add(localFile);
-                                Log($"Added: {localFile.FileLocationAbsPath} to upload queue! (update)");
-                            }
-                        }
-                        else
-                        {
-                            if (ftpRemoteFilesList.Find(x => x.FileLocationAbsPath == localFile.FileLocationAbsPath.Replace(localDirToSync, "").Replace("\\", "/")) == null)
-                            {
-                                filesToUpload.Add(localFile);
-                                Log($"Added: {localFile.FileLocationAbsPath} to upload queue!");
-                            }
+                        filesToDownload.Add(remoteFile);
+                        Log($"Added: {remoteFile.FileLocationAbsPath} to download queue!");
+                    }
+                }
+
+                foreach (var localFile in localFiles)
+                {
+                    File remoteFileTableRecord = remoteFilesTable.Find(x => x.FileLocationAbsPath == localFile.FileLocationAbsPath.Replace(localDirToSync, "").Replace("\\", "/"));
+                    if (remoteFileTableRecord != null)
+                    {
+                        if (remoteFileTableRecord.FileSize != localFile.FileSize)
+                        { 
+                            filesToUpload.Add(localFile);
+                            Log($"Added: {localFile.FileLocationAbsPath} to upload queue! (update)");
                         }
                     }
-                    #endregion
 
-                    #region ftpPart
-                    foreach (var file in filesToUpload)
+                    if (ftpRemoteFilesList.Find(x => x.FileLocationAbsPath == localFile.FileLocationAbsPath.Replace(localDirToSync, "").Replace("\\", "/")) == null)
                     {
-                        string remotePath = file.FileLocationAbsPath.Replace(localDirToSync, "").Replace("\\", "/");
-                        Log($"Uploading: {file.FileLocationAbsPath}");
-                        ftpManager.uploadFile(file.FileLocationAbsPath, remotePath);
+                        filesToUpload.Add(localFile);
+                        Log($"Added: {localFile.FileLocationAbsPath} to upload queue!");
                     }
+                }
+                #endregion
 
-                    foreach (var remoteFile in filesToDownload)
-                    {
-                        Log($"Downloading: {remoteFile.FileLocationAbsPath}");
-                        ftpManager.downloadFile($"{localDirToSync}", remoteFile.FileLocationAbsPath);
-                    }
+                #region ftpPart
+                foreach (var file in filesToUpload)
+                {
+                    string remotePath = file.FileLocationAbsPath.Replace(localDirToSync, "").Replace("\\", "/");
+                    Log($"Uploading: {file.FileLocationAbsPath}");
+                    await ftpManager.uploadFileAsync(file.FileLocationAbsPath, remotePath);
+                }
 
-                    foreach (var remoteFile in ftpRemoteFilesToDelete)
-                    {
-                        ftpManager.deleteFile(remoteFile.FileLocationAbsPath);
-                    }
+                foreach (var remoteFile in filesToDownload)
+                {
+                    Log($"Downloading: {remoteFile.FileLocationAbsPath}");
+                    await ftpManager.downloadFileAsync($"{localDirToSync}", remoteFile.FileLocationAbsPath);
+                }
+                #endregion
 
-                    foreach (var localFile in localFilesToDelete)
-                    {
-                        System.IO.File.Delete($"{localDirToSync.Replace("\\", "/")}{localFile.FileLocationAbsPath}");
-                    }
-                    #endregion
-                });
-
-                updateRemoteFilesTable();
+                await updateRemoteFilesTable();
 
             }
         }

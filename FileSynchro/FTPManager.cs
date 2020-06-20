@@ -24,6 +24,7 @@ namespace FileSynchro
             this.secureMode = secureMode;
 
             ftpClient = new FtpClient(ftpServerAddress, ftpUsername, ftpPassword);
+            ftpClient.SocketKeepAlive = true;
         }
 
         public async Task<bool> connect()
@@ -41,9 +42,9 @@ namespace FileSynchro
             
         }
 
-        public void uploadFile(string localfileToUploadAbsPath, string remotePath)
+        public async Task uploadFileAsync(string localfileToUploadAbsPath, string remotePath)
         { 
-            ftpClient.UploadFile(localfileToUploadAbsPath, remotePath, createRemoteDir: true);
+            await ftpClient.UploadFileAsync(localfileToUploadAbsPath, remotePath, createRemoteDir: true);
         }
 
         public void setModifiedTime(string path, DateTime time)
@@ -51,18 +52,18 @@ namespace FileSynchro
             ftpClient.SetModifiedTime(path, time, FtpDate.Local);
         }
 
-        public void downloadFile(string localDirectoryDestAbsPath, string remotePath)
+        public async Task downloadFileAsync(string localDirectoryDestAbsPath, string remotePath)
         {
-            ftpClient.DownloadFile(localDirectoryDestAbsPath + remotePath.Replace('/','\\'), remotePath);
+            await ftpClient.DownloadFileAsync(localDirectoryDestAbsPath + remotePath.Replace('/','\\'), remotePath);
         }
 
         public void deleteFile(string absPathToFile)
         {
             ftpClient.DeleteFile(absPathToFile);
         }
-        public List<File> getFtpRemoteFilesList()
+        public async Task<List<File>> getFtpRemoteFilesList()
         {
-            FtpListItem[] remoteFilesList = ftpClient.GetListing(ftpClient.GetWorkingDirectory(), FtpListOption.Recursive);
+            FtpListItem[] remoteFilesList = await ftpClient.GetListingAsync(ftpClient.GetWorkingDirectory(), FtpListOption.Recursive);
 
             List<File> parsedFilesList = new List<File>();
 

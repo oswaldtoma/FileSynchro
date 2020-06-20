@@ -1,5 +1,4 @@
-﻿using FileSync;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -8,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Configuration;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace FileSynchro
 {
@@ -17,11 +18,16 @@ namespace FileSynchro
         {
             InitializeComponent();
             connectButton.Enabled = false;
-            //TODO config file
-            localDirTextbox.Text = "C:\\Users\\Oswald\\Desktop\\lokalnyfolder";
-            ftpServerAddrTextBox.Text = "127.0.0.1";
-            usernameTextBox.Text = "user";
-            passwordTextBox.Text = "password!";
+            ConfigurationMgr.loadSettings();
+            localDirTextbox.Text = ConfigurationMgr.localDirToSync;
+            ftpServerAddrTextBox.Text = ConfigurationMgr.ftpServerAddress;
+            usernameTextBox.Text = ConfigurationMgr.ftpUsername;
+            passwordTextBox.Text = ConfigurationMgr.ftpPassword;
+            ftpsCheckbox.Checked = ConfigurationMgr.secureMode;
+            if(ConfigurationMgr.settingsLoaded)
+            {
+                ftpSettingsApplyButton.Enabled = false;
+            }
         }
         private void button1_Click(object sender, EventArgs e)
         {
@@ -46,11 +52,21 @@ namespace FileSynchro
                 ftpSettingsApplyButton.Enabled = false;
                 fileSystemWatcher1.Path = localDirTextbox.Text;
                 connectButton.Enabled = true;
+                ConfigurationMgr.localDirToSync = localDirTextbox.Text;
+                ConfigurationMgr.ftpServerAddress = ftpServerAddrTextBox.Text;
+                ConfigurationMgr.ftpUsername = usernameTextBox.Text;
+                ConfigurationMgr.ftpPassword = passwordTextBox.Text;
+                ConfigurationMgr.secureMode = ftpsCheckbox.Checked;
+                ConfigurationMgr.saveSettings();
             }
         }
 
         private async void timer1_Tick(object sender, EventArgs e)
         {
+            if (!Synchronization.isInitialized && ConfigurationMgr.settingsLoaded)
+            {
+                await Synchronization.init(ConfigurationMgr.localDirToSync, ConfigurationMgr.ftpServerAddress, ConfigurationMgr.ftpUsername, ConfigurationMgr.ftpPassword, ConfigurationMgr.secureMode);
+            }
             await Synchronization.synchronize();
         }
 
@@ -93,13 +109,15 @@ namespace FileSynchro
         {
             if (!Synchronization.isInitialized)
             {
-                await Synchronization.init(localDirTextbox.Text, ftpServerAddrTextBox.Text, usernameTextBox.Text, passwordTextBox.Text, ftpsCheckbox.Checked);
+                await Synchronization.init(ConfigurationMgr.localDirToSync, ConfigurationMgr.ftpServerAddress, ConfigurationMgr.ftpUsername, ConfigurationMgr.ftpPassword, ConfigurationMgr.secureMode);
             }
         }
 
         private void logTimer_Tick(object sender, EventArgs e)
         {
             logsTextBox.Text = Synchronization.logVar;
+            logsTextBox.SelectionStart = logsTextBox.Text.Length;
+            logsTextBox.ScrollToCaret();
         }
 
         private void Form1_Load(object sender, EventArgs e)

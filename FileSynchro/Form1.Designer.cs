@@ -99,7 +99,6 @@
             this.logsTextBox.Multiline = true;
             this.logsTextBox.Name = "logsTextBox";
             this.logsTextBox.ReadOnly = true;
-            this.logsTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.logsTextBox.Size = new System.Drawing.Size(633, 373);
             this.logsTextBox.TabIndex = 0;
             this.logsTextBox.TextChanged += new System.EventHandler(this.logsTextBox_TextChanged);
@@ -240,7 +239,7 @@
             // syncTimer
             // 
             this.syncTimer.Enabled = true;
-            this.syncTimer.Interval = 60000;
+            this.syncTimer.Interval = 30000;
             this.syncTimer.Tick += new System.EventHandler(this.timer1_Tick);
             // 
             // fileSystemWatcher1
