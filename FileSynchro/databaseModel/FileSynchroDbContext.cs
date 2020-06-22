@@ -10,7 +10,7 @@ namespace FileSynchro
 {
     public class FileSynchroDbContext : DbContext
     {
-        public FileSynchroDbContext() : base("name=FileSynchroDbConnectionStr")
+        public FileSynchroDbContext() : base()
         {
         }
         public DbSet<File> RemoteFiles { get; set; }
